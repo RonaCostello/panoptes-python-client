@@ -38,53 +38,23 @@ class SubjectSet(PanoptesObject):
         for sms in SetMemberSubject.where(subject_set_id=self.id):
             yield sms.links.subject
 
-    @batchable
     def add(self, subjects):
         """
-        Links the given subjects to this set.
+        A wrapper around :py:meth:`.LinkCollection.add`. Equivalent to::
 
-        - **subjects** can be a list of :py:class:`.Subject` instances, a list
-          of subject IDs, a single :py:class:`.Subject` instance, or a single
-          subject ID.
-
-        Examples::
-
-            subject_set.add(1234)
-            subject_set.add([1,2,3,4])
-            subject_set.add(Subject(1234))
-            subject_set.add([Subject(12), Subject(34)])
+            subject.links.add(subjects)
         """
 
-        _subjects = self._build_subject_list(subjects)
+        return self.links.subjects.add(subjects)
 
-        self.http_post(
-            '{}/links/subjects'.format(self.id),
-            json={'subjects': _subjects}
-        )
-
-    @batchable
     def remove(self, subjects):
         """
-        Unlinks the given subjects from this set.
+        A wrapper around :py:meth:`.LinkCollection.remove`. Equivalent to::
 
-        - **subjects** can be a list of :py:class:`.Subject` instances, a list
-          of subject IDs, a single :py:class:`.Subject` instance, or a single
-          subject ID.
-
-        Examples::
-
-            subject_set.remove(1234)
-            subject_set.remove([1,2,3,4])
-            subject_set.remove(Subject(1234))
-            subject_set.remove([Subject(12), Subject(34)])
+            subject.links.remove(subjects)
         """
 
-        _subjects = self._build_subject_list(subjects)
-
-        _subjects_ids = ",".join(_subjects)
-        self.http_delete(
-            '{}/links/subjects/{}'.format(self.id, _subjects_ids)
-        )
+        return self.links.subjects.remove(subjects)
 
     def __contains__(self, subject):
         """
@@ -111,24 +81,6 @@ class SubjectSet(PanoptesObject):
         ).object_count
 
         return linked_subject_count == 1
-
-    def _build_subject_list(self, subjects):
-        _subjects = []
-        for subject in subjects:
-            if not (
-                isinstance(subject, Subject)
-                or isinstance(subject, (int, str,))
-            ):
-                raise TypeError
-
-            if isinstance(subject, Subject):
-                _subject_id = str(subject.id)
-            else:
-                _subject_id = str(subject)
-
-            _subjects.append(_subject_id)
-
-        return _subjects
 
 
 LinkResolver.register(SubjectSet)
